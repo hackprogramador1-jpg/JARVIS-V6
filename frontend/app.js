@@ -1,6 +1,6 @@
 // ============================================================
-// JARVIS V6 — FRONTEND APP
-// Conexão da interface com o núcleo JARVIS
+// JARVIS V6 — APLICATIVO DE FRONTEND
+// Conexão oficial com o núcleo JARVIS V6
 // ============================================================
 
 import {
@@ -31,14 +31,15 @@ import {
   on
 } from "../brain/events.js";
 
+
 // ============================================================
 // ELEMENTOS
 // ============================================================
 
-const $ = (selector) =>
-  document.querySelector(selector);
+const $ = (selector) => document.querySelector(selector);
 
 const app = $("#jarvis-app");
+
 const commandForm = $("#command-form");
 const commandInput = $("#command-input");
 const sendButton = $("#send-button");
@@ -46,7 +47,7 @@ const sendButton = $("#send-button");
 const voiceButton = $("#voice-button");
 const stopVoiceButton = $("#stop-voice-button");
 
-const messages = $("#messages");
+const mensagens = $("#mensagens");
 const assistantMessage = $("#assistant-message");
 
 const systemStatus = $("#system-status");
@@ -61,38 +62,184 @@ const closeDebug = $("#close-debug");
 
 const navigation = document.querySelectorAll(".nav-item");
 
+
 // ============================================================
 // ESTADO DA INTERFACE
 // ============================================================
 
 const UI = {
-  initialized: false,
-  processing: false,
-  listening: false,
-  speaking: false,
-  currentSection: "core"
+  inicializado: false,
+  processando: false,
+  ouvindo: false,
+  falando: false,
+  secaoAtual: "core"
 };
+
+
+// ============================================================
+// UTILIDADES
+// ============================================================
+
+function setCoreState(state) {
+  if (!coreState) return;
+
+  coreState.textContent = String(state || "STANDBY").toUpperCase();
+
+  if (coreOrb) {
+    coreOrb.dataset.state = String(state || "standby").toLowerCase();
+  }
+}
+
+
+function setAssistantMessage(text) {
+  if (!assistantMessage) return;
+
+  assistantMessage.textContent =
+    text || "Sistema aguardando comando.";
+}
+
+
+function setSystemStatus(online, text = null) {
+  if (!systemStatus) return;
+
+  systemStatus.classList.toggle("online", online);
+  systemStatus.classList.toggle("offline", !online);
+
+  if (systemStatusText) {
+    systemStatusText.textContent =
+      text || (online ? "ONLINE" : "OFFLINE");
+  }
+}
+
+
+function adicionarMensagem(tipo, texto) {
+  if (!mensagens || !texto) return;
+
+  const elemento = document.createElement("div");
+
+  elemento.className = `message message-${tipo}`;
+
+  elemento.textContent = texto;
+
+  mensagens.appendChild(elemento);
+
+  mensagens.scrollTop = mensagens.scrollHeight;
+}
+
+
+function mostrarProcessamento() {
+  UI.processando = true;
+
+  setCoreState("THINKING");
+
+  setAssistantMessage("Processando comando...");
+
+  if (sendButton) {
+    sendButton.disabled = true;
+  }
+}
+
+
+function esconderProcessamento() {
+  UI.processando = false;
+
+  if (sendButton) {
+    sendButton.disabled = false;
+  }
+}
+
+
+function extrairResposta(resultado) {
+  if (!resultado) return null;
+
+  if (typeof resultado === "string") {
+    return resultado;
+  }
+
+  const candidatos = [
+    resultado.response,
+    resultado.resposta,
+    resultado.message,
+    resultado.mensagem,
+    resultado.text,
+    resultado.output,
+    resultado.result?.response,
+    resultado.result?.resposta,
+    resultado.result?.message,
+    resultado.result?.mensagem,
+    resultado.result?.text,
+    resultado.result?.output,
+    resultado.data?.response,
+    resultado.data?.message
+  ];
+
+  for (const candidato of candidatos) {
+    if (
+      typeof candidato === "string" &&
+      candidato.trim()
+    ) {
+      return candidato.trim();
+    }
+  }
+
+  return null;
+}
+
+
+function extrairErro(resultado) {
+  if (!resultado) return null;
+
+  const candidatos = [
+    resultado.error,
+    resultado.erro,
+    resultado.result?.error,
+    resultado.result?.erro,
+    resultado.data?.error
+  ];
+
+  for (const candidato of candidatos) {
+    if (
+      typeof candidato === "string" &&
+      candidato.trim()
+    ) {
+      return candidato.trim();
+    }
+  }
+
+  return null;
+}
+
 
 // ============================================================
 // INICIALIZAÇÃO
 // ============================================================
 
-async function initializeApp() {
+async function inicializarAplicativo() {
   try {
+
     setCoreState("INITIALIZING");
+
+    setSystemStatus(false, "INITIALIZING");
+
     setAssistantMessage("Inicializando núcleo JARVIS...");
 
-    const result = initializeEngine();
 
-    if (result?.ok === false) {
+    const resultado = await initializeEngine();
+
+
+    if (resultado?.ok === false) {
       throw new Error(
-        result.error || "Falha ao inicializar engine."
+        resultado.error ||
+        resultado.erro ||
+        "Falha ao inicializar o núcleo."
       );
     }
 
-    UI.initialized = true;
 
-    updateSystemStatus(true);
+    UI.inicializado = true;
+
+
+    setSystemStatus(true, "ONLINE");
 
     setCoreState("READY");
 
@@ -100,643 +247,127 @@ async function initializeApp() {
       "JARVIS V6 online. Sistema pronto."
     );
 
-    addMessage(
+
+    adicionarMensagem(
       "system",
       "Núcleo JARVIS V6 inicializado."
     );
 
-    setupEvents();
 
-    updateStatus();
+    atualizarStatus();
 
-  } catch (error) {
-    console.error(error);
 
-    UI.initialized = false;
+  } catch (erro) {
 
-    updateSystemStatus(false);
+    console.error(
+      "Erro ao inicializar JARVIS:",
+      erro
+    );
+
+
+    UI.inicializado = false;
+
+
+    setSystemStatus(false, "OFFLINE");
 
     setCoreState("ERROR");
 
     setAssistantMessage(
-      "Falha ao inicializar o núcleo."
+      "Falha ao inicializar o núcleo JARVIS."
     );
 
-    addMessage(
-      "system",
-      `Erro: ${error?.message || "desconhecido"}`
+
+    adicionarMensagem(
+      "error",
+      `ERRO: ${erro.message || erro}`
     );
+
   }
 }
 
-// ============================================================
-// EVENTOS
-// ============================================================
-
-function setupEvents() {
-
-  commandForm?.addEventListener(
-    "submit",
-    async (event) => {
-      event.preventDefault();
-
-      const input = commandInput?.value?.trim();
-
-      if (!input) {
-        return;
-      }
-
-      commandInput.value = "";
-
-      await handleInput(input);
-    }
-  );
-
-  voiceButton?.addEventListener(
-    "click",
-    async () => {
-      await startVoice();
-    }
-  );
-
-  stopVoiceButton?.addEventListener(
-    "click",
-    () => {
-      stopVoice();
-    }
-  );
-
-  closeDebug?.addEventListener(
-    "click",
-    () => {
-      closeDebugPanel();
-    }
-  );
-
-  navigation.forEach((button) => {
-
-    button.addEventListener(
-      "click",
-      () => {
-
-        const section =
-          button.dataset.section;
-
-        if (!section) {
-          return;
-        }
-
-        changeSection(section);
-      }
-    );
-
-  });
-
-  // Eventos do sistema
-
-  try {
-
-    on(
-      "system:ready",
-      () => {
-        updateSystemStatus(true);
-      }
-    );
-
-    on(
-      "system:error",
-      (event) => {
-
-        console.error(
-          "JARVIS system error:",
-          event
-        );
-
-        updateSystemStatus(false);
-      }
-    );
-
-    on(
-      "input",
-      () => {
-        setCoreState("ANALYZING");
-      }
-    );
-
-    on(
-      "thinking",
-      () => {
-        setCoreState("THINKING");
-      }
-    );
-
-    on(
-      "ai:request",
-      () => {
-        setCoreState("THINKING");
-      }
-    );
-
-    on(
-      "ai:response",
-      () => {
-        setCoreState("RESPONDING");
-      }
-    );
-
-    on(
-      "voice:started",
-      () => {
-        UI.listening = true;
-        setCoreState("LISTENING");
-      }
-    );
-
-    on(
-      "voice:stopped",
-      () => {
-        UI.listening = false;
-
-        if (!UI.processing) {
-          setCoreState("READY");
-        }
-      }
-    );
-
-  } catch (error) {
-    console.warn(
-      "Event system indisponível:",
-      error
-    );
-  }
-}
 
 // ============================================================
-// ENTRADA PRINCIPAL
+// PROCESSAMENTO DE TEXTO
 // ============================================================
 
-async function handleInput(input) {
+async function processarEntrada(texto) {
 
-  if (UI.processing) {
+  if (!texto || !texto.trim()) {
     return;
   }
 
-  UI.processing = true;
 
-  setCoreState("ANALYZING");
+  const entrada = texto.trim();
 
-  addMessage("user", input);
+
+  adicionarMensagem(
+    "user",
+    entrada
+  );
+
+
+  mostrarProcessamento();
+
 
   try {
 
-    /*
-     * O engine decide internamente se deve:
-     * - executar comando
-     * - consultar memória
-     * - pesquisar
-     * - usar IA
-     */
+    let resultado;
 
-    const result =
-      await processInput(input);
 
-    const response =
-      extractResponse(result);
+    // O núcleo principal recebe primeiro o comando.
+    resultado = await processInput(entrada);
 
-    if (response) {
 
-      addMessage(
-        "assistant",
-        response
-      );
+    let resposta = extrairResposta(resultado);
 
-      setAssistantMessage(
-        response
-      );
 
-      setCoreState("RESPONDING");
+    // Caso seja uma conversa que precise da IA,
+    // enviamos diretamente para o módulo de chat.
+    if (!resposta) {
 
-    } else {
+      const intent =
+        resultado?.intent ||
+        resultado?.result?.intent ||
+        resultado?.analysis?.intent;
 
-      // Fallback para IA
+      const route =
+        resultado?.route ||
+        resultado?.result?.route ||
+        resultado?.analysis?.route;
 
-      const aiResult =
-        await processChat(input);
 
-      const aiResponse =
-        extractResponse(aiResult);
+      if (
+        intent === "chat" ||
+        route === "ai" ||
+        route === "unknown" ||
+        !intent
+      ) {
 
-      if (aiResponse) {
+        resultado = await processChat(entrada);
 
-        addMessage(
-          "assistant",
-          aiResponse
-        );
-
-        setAssistantMessage(
-          aiResponse
-        );
-
-        setCoreState("RESPONDING");
-
-      } else {
-
-        setAssistantMessage(
-          "Não consegui obter uma resposta."
-        );
-
-        setCoreState("READY");
+        resposta = extrairResposta(resultado);
       }
     }
 
-  } catch (error) {
 
-    console.error(error);
+    if (!resposta) {
 
-    const message =
-      error?.message ||
-      "Ocorreu um erro ao processar o comando.";
+      const erro =
+        extrairErro(resultado) ||
+        "Não consegui obter uma resposta do núcleo.";
 
-    addMessage(
-      "system",
-      message
-    );
-
-    setAssistantMessage(
-      message
-    );
-
-    setCoreState("ERROR");
-
-  } finally {
-
-    UI.processing = false;
-
-    setTimeout(() => {
-
-      if (!UI.listening) {
-        setCoreState("READY");
-      }
-
-    }, 1200);
-  }
-}
-
-// ============================================================
-// EXTRAIR RESPOSTA
-// ============================================================
-
-function extractResponse(result) {
-
-  if (!result) {
-    return "";
-  }
-
-  if (typeof result === "string") {
-    return result;
-  }
-
-  if (typeof result.response === "string") {
-    return result.response;
-  }
-
-  if (typeof result.result?.response === "string") {
-    return result.result.response;
-  }
-
-  if (typeof result.result?.result === "string") {
-    return result.result.result;
-  }
-
-  if (typeof result.output === "string") {
-    return result.output;
-  }
-
-  if (typeof result.message === "string") {
-    return result.message;
-  }
-
-  return "";
-}
-
-// ============================================================
-// VOZ
-// ============================================================
-
-async function startVoice() {
-
-  if (UI.listening) {
-    return;
-  }
-
-  try {
-
-    UI.listening = true;
-
-    setCoreState("LISTENING");
-
-    setAssistantMessage(
-      "Estou ouvindo..."
-    );
-
-    await listen();
-
-  } catch (error) {
-
-    UI.listening = false;
-
-    setCoreState("ERROR");
-
-    addMessage(
-      "system",
-      error?.message ||
-      "Não foi possível iniciar o microfone."
-    );
-  }
-}
-
-function stopVoice() {
-
-  try {
-
-    stopListen();
-
-  } catch (_) {}
-
-  try {
-
-    stopTalk();
-
-  } catch (_) {}
-
-  UI.listening = false;
-  UI.speaking = false;
-
-  setCoreState("READY");
-
-  setAssistantMessage(
-    "Escuta encerrada."
-  );
-}
-
-// ============================================================
-// STATUS
-// ============================================================
-
-function updateStatus() {
-
-  try {
-
-    const status =
-      getEngineStatus();
-
-    const online =
-      status?.ok !== false &&
-      status?.engine?.running !== false;
-
-    updateSystemStatus(online);
-
-  } catch (error) {
-
-    console.warn(
-      "Erro ao atualizar status:",
-      error
-    );
-
-    updateSystemStatus(false);
-  }
-}
-
-function updateSystemStatus(online) {
-
-  if (!systemStatus) {
-    return;
-  }
-
-  systemStatus.classList.toggle(
-    "online",
-    Boolean(online)
-  );
-
-  systemStatus.classList.toggle(
-    "offline",
-    !online
-  );
-
-  if (systemStatusText) {
-
-    systemStatusText.textContent =
-      online
-        ? "ONLINE"
-        : "OFFLINE";
-  }
-}
-
-// ============================================================
-// CORE VISUAL
-// ============================================================
-
-function setCoreState(state) {
-
-  if (coreState) {
-    coreState.textContent =
-      String(state).toUpperCase();
-  }
-
-  if (!coreOrb) {
-    return;
-  }
-
-  coreOrb.dataset.state =
-    String(state).toLowerCase();
-}
-
-function setAssistantMessage(text) {
-
-  if (!assistantMessage) {
-    return;
-  }
-
-  assistantMessage.textContent =
-    text || "";
-}
-
-// ============================================================
-// MENSAGENS
-// ============================================================
-
-function addMessage(type, text) {
-
-  if (!messages || !text) {
-    return;
-  }
-
-  const element =
-    document.createElement("div");
-
-  element.className =
-    `message ${type}`;
-
-  element.textContent =
-    text;
-
-  messages.appendChild(element);
-
-  messages.scrollTop =
-    messages.scrollHeight;
-}
-
-// ============================================================
-// NAVEGAÇÃO
-// ============================================================
-
-function changeSection(section) {
-
-  UI.currentSection =
-    section;
-
-  navigation.forEach(
-    (button) => {
-
-      button.classList.toggle(
-        "active",
-        button.dataset.section === section
-      );
-
+      throw new Error(erro);
     }
-  );
 
-  switch (section) {
 
-    case "core":
+    setCoreState("RESPONDING");
 
-      setAssistantMessage(
-        "Núcleo JARVIS ativo."
-      );
+    setAssistantMessage(resposta);
 
-      break;
+    adicionarMensagem(
+      "assistant",
+      resposta
+    );
 
-    case "memory":
 
-      setAssistantMessage(
-        "Memória do JARVIS."
-      );
-
-      break;
-
-    case "automation":
-
-      setAssistantMessage(
-        "Central de automações."
-      );
-
-      break;
-
-    case "workflow":
-
-      setAssistantMessage(
-        "Central de workflows."
-      );
-
-      break;
-
-    case "settings":
-
-      setAssistantMessage(
-        "Configurações do sistema."
-      );
-
-      break;
-
-    default:
-
-      setAssistantMessage(
-        "JARVIS V6."
-      );
-  }
-}
-
-// ============================================================
-// DIAGNÓSTICO
-// ============================================================
-
-export function openDiagnostic() {
-
-  if (!debugPanel || !debugOutput) {
-    return;
-  }
-
-  debugPanel.hidden = false;
-
-  debugOutput.textContent =
-    "Executando diagnóstico...";
-
-  try {
-
-    const result =
-      diagnoseEngine();
-
-    debugOutput.textContent =
-      JSON.stringify(
-        result,
-        null,
-        2
-      );
-
-  } catch (error) {
-
-    debugOutput.textContent =
-      JSON.stringify(
-        {
-          ok: false,
-          error:
-            error?.message ||
-            "Falha no diagnóstico."
-        },
-        null,
-        2
-      );
-  }
-}
-
-function closeDebugPanel() {
-
-  if (debugPanel) {
-    debugPanel.hidden = true;
-  }
-}
-
-// ============================================================
-// API GLOBAL PARA DEBUG
-// ============================================================
-
-window.JARVIS = {
-
-  version: "6.0.0",
-
-  input: handleInput,
-
-  chat: processChat,
-
-  command: processCommand,
-
-  voice: {
-    start: startVoice,
-    stop: stopVoice,
-    status: getVoiceManagerStatus
-  },
-
-  status: getEngineStatus,
-
-  diagnose: openDiagnostic,
-
-  session: getSession,
-
-  settings: getSettings
-};
-
-// ============================================================
-// INICIAR
-// ============================================================
-
-initializeApp();
+    set
