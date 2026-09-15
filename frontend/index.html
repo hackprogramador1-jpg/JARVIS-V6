@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+  >
+
+  <meta
+    name="theme-color"
+    content="#05070a"
+  >
+
+  <meta
+    name="description"
+    content="JARVIS V6 — Intelligent Personal Assistant"
+  >
+
+  <title>JARVIS V6</title>
+
+  <link
+    rel="stylesheet"
+    href="./style.css"
+  >
+</head>
+
+<body>
+
+  <!-- ======================================================
+       JARVIS APPLICATION
+  ======================================================= -->
+
+  <main id="jarvis-app">
+
+    <!-- HEADER -->
+
+    <header id="topbar">
+
+      <div class="brand">
+        <div class="brand-core"></div>
+
+        <div class="brand-text">
+          <strong>JARVIS</strong>
+          <span>V6 CORE</span>
+        </div>
+      </div>
+
+      <div
+        id="system-status"
+        class="system-status offline"
+      >
+        <span class="status-dot"></span>
+        <span id="system-status-text">
+          OFFLINE
+        </span>
+      </div>
+
+    </header>
+
+
+    <!-- ====================================================
+         CENTRAL CORE
+    ===================================================== -->
+
+    <section id="core-area">
+
+      <div
+        id="core-orb"
+        class="core-orb"
+      >
+
+        <div class="core-ring ring-1"></div>
+        <div class="core-ring ring-2"></div>
+        <div class="core-ring ring-3"></div>
+
+        <div class="core-center">
+
+          <div class="core-logo">
+            J
+          </div>
+
+          <div
+            id="core-state"
+            class="core-state"
+          >
+            STANDBY
+          </div>
+
+        </div>
+
+      </div>
+
+
+      <div
+        id="assistant-message"
+        class="assistant-message"
+      >
+        Inicializando JARVIS...
+      </div>
+
+    </section>
+
+
+    <!-- ====================================================
+         CONSOLE
+    ===================================================== -->
+
+    <section id="console">
+
+      <div
+        id="messages"
+        class="messages"
+      >
+
+      </div>
+
+    </section>
+
+
+    <!-- ====================================================
+         COMMAND AREA
+    ===================================================== -->
+
+    <section id="command-area">
+
+      <form id="command-form">
+
+        <input
+          id="command-input"
+          type="text"
+          autocomplete="off"
+          placeholder="Fale ou digite um comando..."
+          aria-label="Comando para JARVIS"
+        >
+
+        <button
+          id="send-button"
+          type="submit"
+          aria-label="Enviar comando"
+        >
+          ↑
+        </button>
+
+      </form>
+
+
+      <div class="voice-controls">
+
+        <button
+          id="voice-button"
+          type="button"
+        >
+          🎙️
+          <span>OUVIR</span>
+        </button>
+
+        <button
+          id="stop-voice-button"
+          type="button"
+        >
+          ■
+          <span>PARAR</span>
+        </button>
+
+      </div>
+
+    </section>
+
+
+    <!-- ====================================================
+         NAVIGATION
+    ===================================================== -->
+
+    <nav id="navigation">
+
+      <button
+        class="nav-item active"
+        data-section="core"
+      >
+        <span>◉</span>
+        <small>CORE</small>
+      </button>
+
+      <button
+        class="nav-item"
+        data-section="memory"
+      >
+        <span>◆</span>
+        <small>MEMÓRIA</small>
+      </button>
+
+      <button
+        class="nav-item"
+        data-section="automation"
+      >
+        <span>◇</span>
+        <small>AUTO</small>
+      </button>
+
+      <button
+        class="nav-item"
+        data-section="workflow"
+      >
+        <span>▣</span>
+        <small>WORKFLOW</small>
+      </button>
+
+      <button
+        class="nav-item"
+        data-section="settings"
+      >
+        <span>⚙</span>
+        <small>CONFIG</small>
+      </button>
+
+    </nav>
+
+
+    <!-- ====================================================
+         DEBUG PANEL
+    ===================================================== -->
+
+    <section
+      id="debug-panel"
+      hidden
+    >
+
+      <div class="debug-header">
+        <strong>JARVIS DIAGNOSTIC</strong>
+
+        <button
+          id="close-debug"
+          type="button"
+        >
+          ×
+        </button>
+      </div>
+
+      <pre id="debug-output"></pre>
+
+    </section>
+
+  </main>
+
+
+  <!-- ======================================================
+       APPLICATION
+  ======================================================= -->
+
+  <script
+    type="module"
+    src="./app.js"
+  ></script>
+
+</body>
+</html>
