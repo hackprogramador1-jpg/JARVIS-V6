@@ -8,121 +8,70 @@
     content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
   >
 
-  <meta
-    name="theme-color"
-    content="#05070a"
-  >
-
-  <meta
-    name="description"
-    content="JARVIS V6 — Intelligent Personal Assistant"
-  >
+  <meta name="theme-color" content="#030507">
 
   <title>JARVIS V6</title>
 
-  <link
-    rel="stylesheet"
-    href="./style.css"
-  >
+  <link rel="stylesheet" href="/frontend/style.css">
 </head>
 
 <body>
 
-  <!-- ======================================================
-       JARVIS APPLICATION
-  ======================================================= -->
-
   <main id="jarvis-app">
 
-    <!-- HEADER -->
-
-    <header id="topbar">
+    <!-- TOPBAR -->
+    <header id="barra-superior">
 
       <div class="brand">
-        <div class="brand-core"></div>
+        <span class="brand-mark">J</span>
 
-        <div class="brand-text">
+        <div>
           <strong>JARVIS</strong>
-          <span>V6 CORE</span>
+          <small>V6 CORE</small>
         </div>
       </div>
 
-      <div
-        id="system-status"
-        class="system-status offline"
-      >
+      <div id="system-status" class="status offline">
         <span class="status-dot"></span>
-        <span id="system-status-text">
-          OFFLINE
-        </span>
+        <span id="system-status-text">OFFLINE</span>
       </div>
 
     </header>
 
 
-    <!-- ====================================================
-         CENTRAL CORE
-    ===================================================== -->
+    <!-- NÚCLEO -->
+    <section id="core-section">
 
-    <section id="core-area">
-
-      <div
-        id="core-orb"
-        class="core-orb"
-      >
+      <div id="core-orb">
 
         <div class="core-ring ring-1"></div>
         <div class="core-ring ring-2"></div>
         <div class="core-ring ring-3"></div>
 
         <div class="core-center">
-
-          <div class="core-logo">
-            J
-          </div>
-
-          <div
-            id="core-state"
-            class="core-state"
-          >
-            STANDBY
-          </div>
-
+          <span id="core-state">STANDBY</span>
+          <strong>J</strong>
+          <small>JARVIS V6</small>
         </div>
 
       </div>
 
-
-      <div
-        id="assistant-message"
-        class="assistant-message"
-      >
+      <div id="assistant-message">
         Inicializando JARVIS...
       </div>
 
     </section>
 
 
-    <!-- ====================================================
-         CONSOLE
-    ===================================================== -->
-
+    <!-- CONSOLE -->
     <section id="console">
 
-      <div
-        id="messages"
-        class="messages"
-      >
-
-      </div>
+      <div id="mensagens"></div>
 
     </section>
 
 
-    <!-- ====================================================
-         COMMAND AREA
-    ===================================================== -->
-
+    <!-- COMANDOS -->
     <section id="command-area">
 
       <form id="command-form">
@@ -132,36 +81,23 @@
           type="text"
           autocomplete="off"
           placeholder="Fale ou digite um comando..."
-          aria-label="Comando para JARVIS"
         >
 
-        <button
-          id="send-button"
-          type="submit"
-          aria-label="Enviar comando"
-        >
-          ↑
+        <button id="send-button" type="submit">
+          ➤
         </button>
 
       </form>
 
 
-      <div class="voice-controls">
+      <div id="voice-controls">
 
-        <button
-          id="voice-button"
-          type="button"
-        >
-          🎙️
-          <span>OUVIR</span>
+        <button id="voice-button" type="button">
+          🎙 OUVIR
         </button>
 
-        <button
-          id="stop-voice-button"
-          type="button"
-        >
-          ■
-          <span>PARAR</span>
+        <button id="stop-voice-button" type="button">
+          ■ PARAR
         </button>
 
       </div>
@@ -169,74 +105,38 @@
     </section>
 
 
-    <!-- ====================================================
-         NAVIGATION
-    ===================================================== -->
+    <!-- NAVEGAÇÃO -->
+    <nav id="bottom-nav">
 
-    <nav id="navigation">
-
-      <button
-        class="nav-item active"
-        data-section="core"
-      >
-        <span>◉</span>
-        <small>CORE</small>
+      <button class="nav-item active" data-section="core">
+        ◉ CORE
       </button>
 
-      <button
-        class="nav-item"
-        data-section="memory"
-      >
-        <span>◆</span>
-        <small>MEMÓRIA</small>
+      <button class="nav-item" data-section="memory">
+        ◆ MEMÓRIA
       </button>
 
-      <button
-        class="nav-item"
-        data-section="automation"
-      >
-        <span>◇</span>
-        <small>AUTO</small>
+      <button class="nav-item" data-section="automation">
+        ◇ AUTO
       </button>
 
-      <button
-        class="nav-item"
-        data-section="workflow"
-      >
-        <span>▣</span>
-        <small>WORKFLOW</small>
+      <button class="nav-item" data-section="workflow">
+        ▣ WORKFLOW
       </button>
 
-      <button
-        class="nav-item"
-        data-section="settings"
-      >
-        <span>⚙</span>
-        <small>CONFIG</small>
+      <button class="nav-item" data-section="settings">
+        ⚙ CONFIG
       </button>
 
     </nav>
 
 
-    <!-- ====================================================
-         DEBUG PANEL
-    ===================================================== -->
+    <!-- DEBUG -->
+    <section id="debug-panel" hidden>
 
-    <section
-      id="debug-panel"
-      hidden
-    >
-
-      <div class="debug-header">
-        <strong>JARVIS DIAGNOSTIC</strong>
-
-        <button
-          id="close-debug"
-          type="button"
-        >
-          ×
-        </button>
-      </div>
+      <button id="close-debug" type="button">
+        FECHAR
+      </button>
 
       <pre id="debug-output"></pre>
 
@@ -245,14 +145,12 @@
   </main>
 
 
-  <!-- ======================================================
-       APPLICATION
-  ======================================================= -->
-
+  <!-- IMPORTANTE:
+       Caminho absoluto para o JS dentro de frontend -->
   <script
     type="module"
-    src="./app.js"
-  ></script>
+    src="/frontend/app.js">
+  </script>
 
 </body>
 </html>
