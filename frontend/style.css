@@ -1,0 +1,777 @@
+/* ============================================================
+   JARVIS V6 — FRONTEND
+   Interface futurista
+   ============================================================ */
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  --bg: #030507;
+  --panel: #080c11;
+  --panel-2: #0d131a;
+  --line: rgba(0, 220, 255, 0.22);
+  --cyan: #00d9ff;
+  --cyan-soft: rgba(0, 217, 255, 0.15);
+  --text: #e8fbff;
+  --muted: #6f8994;
+  --danger: #ff4d6d;
+
+  --header-height: 70px;
+  --nav-height: 74px;
+}
+
+/* ============================================================
+   BASE
+   ============================================================ */
+
+html,
+body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: var(--bg);
+  color: var(--text);
+  font-family:
+    Inter,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+}
+
+body {
+  min-height: 100dvh;
+}
+
+/* ============================================================
+   APP
+   ============================================================ */
+
+#jarvis-app {
+  position: relative;
+
+  width: 100%;
+  height: 100dvh;
+
+  overflow: hidden;
+
+  background:
+    radial-gradient(
+      circle at 50% 45%,
+      rgba(0, 180, 220, 0.08),
+      transparent 32%
+    ),
+    linear-gradient(
+      180deg,
+      #020406 0%,
+      #05080c 100%
+    );
+}
+
+/* ============================================================
+   GRID
+   ============================================================ */
+
+#jarvis-app::before {
+  content: "";
+
+  position: absolute;
+  inset: 0;
+
+  pointer-events: none;
+
+  opacity: 0.28;
+
+  background-image:
+    linear-gradient(
+      rgba(0, 217, 255, 0.025) 1px,
+      transparent 1px
+    ),
+    linear-gradient(
+      90deg,
+      rgba(0, 217, 255, 0.025) 1px,
+      transparent 1px
+    );
+
+  background-size: 32px 32px;
+}
+
+/* ============================================================
+   TOPBAR
+   ============================================================ */
+
+#topbar {
+  position: absolute;
+
+  top: 0;
+  left: 0;
+  right: 0;
+
+  height: var(--header-height);
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  padding: 0 18px;
+
+  border-bottom: 1px solid var(--line);
+
+  background: rgba(3, 5, 7, 0.82);
+
+  backdrop-filter: blur(14px);
+
+  z-index: 20;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+}
+
+.brand-core {
+  width: 28px;
+  height: 28px;
+
+  border: 1px solid var(--cyan);
+
+  transform: rotate(45deg);
+
+  box-shadow:
+    0 0 10px rgba(0, 217, 255, 0.45),
+    inset 0 0 8px rgba(0, 217, 255, 0.25);
+}
+
+.brand-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.brand-text strong {
+  font-size: 15px;
+  letter-spacing: 3px;
+}
+
+.brand-text span {
+  margin-top: 2px;
+
+  font-size: 8px;
+  letter-spacing: 2px;
+
+  color: var(--muted);
+}
+
+/* ============================================================
+   STATUS
+   ============================================================ */
+
+.system-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  font-size: 9px;
+  letter-spacing: 2px;
+}
+
+.status-dot {
+  width: 7px;
+  height: 7px;
+
+  border-radius: 50%;
+
+  background: var(--danger);
+}
+
+.system-status.online .status-dot {
+  background: var(--cyan);
+
+  box-shadow:
+    0 0 8px var(--cyan);
+}
+
+/* ============================================================
+   CORE AREA
+   ============================================================ */
+
+#core-area {
+  position: absolute;
+
+  top: var(--header-height);
+  left: 0;
+  right: 0;
+  bottom: var(--nav-height);
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+
+  z-index: 3;
+}
+
+/* ============================================================
+   CORE ORB
+   ============================================================ */
+
+.core-orb {
+  position: relative;
+
+  width: min(48vw, 280px);
+  aspect-ratio: 1;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 50%;
+}
+
+/* ============================================================
+   RINGS
+   ============================================================ */
+
+.core-ring {
+  position: absolute;
+
+  border-radius: 50%;
+
+  border: 1px solid var(--line);
+
+  pointer-events: none;
+}
+
+.ring-1 {
+  inset: 8%;
+
+  animation:
+    rotateRing 18s linear infinite;
+}
+
+.ring-2 {
+  inset: 17%;
+
+  border-style: dashed;
+
+  animation:
+    rotateRingReverse 12s linear infinite;
+}
+
+.ring-3 {
+  inset: 27%;
+
+  border-color: rgba(0, 217, 255, 0.38);
+
+  animation:
+    pulseRing 3s ease-in-out infinite;
+}
+
+/* ============================================================
+   CORE CENTER
+   ============================================================ */
+
+.core-center {
+  position: relative;
+
+  width: 42%;
+  aspect-ratio: 1;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 50%;
+
+  background:
+    radial-gradient(
+      circle,
+      rgba(0, 217, 255, 0.18),
+      rgba(0, 217, 255, 0.02) 65%,
+      transparent 70%
+    );
+
+  box-shadow:
+    0 0 30px rgba(0, 217, 255, 0.18),
+    inset 0 0 30px rgba(0, 217, 255, 0.08);
+}
+
+.core-logo {
+  font-size: clamp(34px, 8vw, 58px);
+  font-weight: 300;
+
+  color: var(--cyan);
+
+  text-shadow:
+    0 0 14px rgba(0, 217, 255, 0.65);
+}
+
+.core-state {
+  margin-top: 5px;
+
+  font-size: 7px;
+  letter-spacing: 2px;
+
+  color: var(--muted);
+}
+
+/* ============================================================
+   ASSISTANT MESSAGE
+   ============================================================ */
+
+.assistant-message {
+  max-width: 80%;
+
+  margin-top: 18px;
+
+  text-align: center;
+
+  font-size: 12px;
+  line-height: 1.5;
+
+  color: #b7dce4;
+}
+
+/* ============================================================
+   CONSOLE
+   ============================================================ */
+
+#console {
+  position: absolute;
+
+  left: 15px;
+  right: 15px;
+
+  bottom: calc(var(--nav-height) + 86px);
+
+  max-height: 25vh;
+
+  overflow: hidden;
+
+  pointer-events: none;
+
+  z-index: 5;
+}
+
+.messages {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+
+  max-height: 25vh;
+
+  overflow-y: auto;
+
+  scrollbar-width: none;
+}
+
+.messages::-webkit-scrollbar {
+  display: none;
+}
+
+.message {
+  padding: 8px 10px;
+
+  border-left: 2px solid var(--cyan);
+
+  background: rgba(0, 217, 255, 0.035);
+
+  font-size: 10px;
+
+  line-height: 1.45;
+}
+
+.message.user {
+  border-left-color: rgba(255, 255, 255, 0.35);
+}
+
+.message.system {
+  color: var(--muted);
+}
+
+/* ============================================================
+   COMMAND AREA
+   ============================================================ */
+
+#command-area {
+  position: absolute;
+
+  left: 15px;
+  right: 15px;
+
+  bottom: calc(var(--nav-height) + 10px);
+
+  z-index: 15;
+}
+
+#command-form {
+  display: flex;
+  gap: 8px;
+}
+
+#command-input {
+  width: 100%;
+
+  min-width: 0;
+
+  height: 44px;
+
+  padding: 0 14px;
+
+  border: 1px solid var(--line);
+  border-radius: 7px;
+
+  outline: none;
+
+  background: rgba(8, 12, 17, 0.92);
+
+  color: var(--text);
+
+  font-size: 12px;
+}
+
+#command-input::placeholder {
+  color: #58707a;
+}
+
+#command-input:focus {
+  border-color: rgba(0, 217, 255, 0.55);
+
+  box-shadow:
+    0 0 15px rgba(0, 217, 255, 0.08);
+}
+
+#send-button {
+  width: 44px;
+  height: 44px;
+
+  flex: 0 0 44px;
+
+  border: 1px solid var(--line);
+  border-radius: 7px;
+
+  background: var(--cyan-soft);
+
+  color: var(--cyan);
+
+  font-size: 20px;
+
+  cursor: pointer;
+}
+
+#send-button:active {
+  transform: scale(0.96);
+}
+
+/* ============================================================
+   VOICE CONTROLS
+   ============================================================ */
+
+.voice-controls {
+  display: flex;
+
+  gap: 7px;
+
+  margin-top: 7px;
+}
+
+.voice-controls button {
+  flex: 1;
+
+  height: 30px;
+
+  border: 1px solid rgba(0, 217, 255, 0.14);
+  border-radius: 5px;
+
+  background: rgba(0, 217, 255, 0.035);
+
+  color: #7ea5ae;
+
+  font-size: 8px;
+
+  letter-spacing: 1px;
+
+  cursor: pointer;
+}
+
+.voice-controls button:active {
+  transform: scale(0.98);
+}
+
+.voice-controls span {
+  margin-left: 4px;
+}
+
+/* ============================================================
+   NAVIGATION
+   ============================================================ */
+
+#navigation {
+  position: absolute;
+
+  left: 0;
+  right: 0;
+  bottom: 0;
+
+  height: var(--nav-height);
+
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+
+  border-top: 1px solid var(--line);
+
+  background: rgba(3, 5, 7, 0.94);
+
+  backdrop-filter: blur(14px);
+
+  z-index: 20;
+}
+
+.nav-item {
+  min-width: 58px;
+
+  border: 0;
+
+  background: transparent;
+
+  color: #506771;
+
+  cursor: pointer;
+}
+
+.nav-item span {
+  display: block;
+
+  margin-bottom: 4px;
+
+  font-size: 15px;
+}
+
+.nav-item small {
+  font-size: 7px;
+
+  letter-spacing: 1px;
+}
+
+.nav-item.active {
+  color: var(--cyan);
+
+  text-shadow:
+    0 0 8px rgba(0, 217, 255, 0.4);
+}
+
+/* ============================================================
+   DEBUG PANEL
+   ============================================================ */
+
+#debug-panel {
+  position: absolute;
+
+  inset: 12% 5% 15% 5%;
+
+  overflow: auto;
+
+  padding: 14px;
+
+  border: 1px solid var(--line);
+
+  border-radius: 10px;
+
+  background: rgba(3, 6, 9, 0.97);
+
+  box-shadow:
+    0 0 40px rgba(0, 0, 0, 0.7);
+
+  z-index: 100;
+}
+
+.debug-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  margin-bottom: 12px;
+
+  font-size: 10px;
+  letter-spacing: 2px;
+}
+
+#close-debug {
+  border: 0;
+
+  background: transparent;
+
+  color: var(--muted);
+
+  font-size: 22px;
+}
+
+#debug-output {
+  white-space: pre-wrap;
+  word-break: break-word;
+
+  color: #9ddbe5;
+
+  font-size: 9px;
+  line-height: 1.5;
+}
+
+/* ============================================================
+   ANIMAÇÕES
+   ============================================================ */
+
+@keyframes rotateRing {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes rotateRingReverse {
+  from {
+    transform: rotate(360deg);
+  }
+
+  to {
+    transform: rotate(0deg);
+  }
+}
+
+@keyframes pulseRing {
+  0%,
+  100% {
+    transform: scale(0.98);
+    opacity: 0.55;
+  }
+
+  50% {
+    transform: scale(1.02);
+    opacity: 1;
+  }
+}
+
+/* ============================================================
+   MODO DEITADO
+   ============================================================ */
+
+@media (orientation: landscape) {
+
+  :root {
+    --header-height: 58px;
+    --nav-height: 62px;
+  }
+
+  #topbar {
+    padding: 0 22px;
+  }
+
+  #core-area {
+    right: 42%;
+  }
+
+  #console {
+    left: 61%;
+    right: 18px;
+
+    top: 78px;
+    bottom: calc(var(--nav-height) + 90px);
+
+    max-height: none;
+  }
+
+  .messages {
+    max-height: 100%;
+  }
+
+  #command-area {
+    left: 61%;
+    right: 18px;
+  }
+
+  .core-orb {
+    width: min(36vh, 260px);
+  }
+
+  .assistant-message {
+    max-width: 60%;
+  }
+
+  #navigation {
+    left: 61%;
+
+    border-left: 1px solid var(--line);
+  }
+}
+
+/* ============================================================
+   TELAS GRANDES
+   ============================================================ */
+
+@media (min-width: 900px) {
+
+  #jarvis-app {
+    max-width: 1500px;
+    margin: 0 auto;
+  }
+
+  #core-area {
+    right: 42%;
+  }
+
+  #console {
+    left: 61%;
+    right: 24px;
+
+    top: 85px;
+    bottom: 150px;
+
+    max-height: none;
+  }
+
+  #command-area {
+    left: 61%;
+    right: 24px;
+  }
+
+  #navigation {
+    left: 61%;
+  }
+}
+
+/* ============================================================
+   ACESSIBILIDADE
+   ============================================================ */
+
+button,
+input {
+  -webkit-tap-highlight-color: transparent;
+}
+
+button:focus-visible,
+input:focus-visible {
+  outline: 1px solid var(--cyan);
+}
+
+/* ============================================================
+   REDUÇÃO DE MOVIMENTO
+   ============================================================ */
+
+@media (prefers-reduced-motion: reduce) {
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+    }
