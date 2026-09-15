@@ -1,777 +1,507 @@
 // ============================================================
 // JARVIS V6 — ENGINE
-// Motor principal de execução
+// Núcleo central de execução do sistema
 // ============================================================
 
 import {
   initializeSystem,
   getSystemStatus,
-  diagnoseSystem
+  diagnoseSystem,
+  restartSystem
 } from "./system.js";
 
 import {
-  routeRequest
+  routeRequest,
+  analyzeOnly,
+  planOnly,
+  contextOnly
 } from "./router.js";
 
 import {
-  askAI
+  askAI,
+  diagnoseAI,
+  getAIInfo
 } from "./ai.js";
 
 import {
-  executeFromText
+  executeFromText,
+  diagnoseCommand
 } from "./command.js";
 
 import {
+  initializeSession,
   createSession,
-  getSessionContext,
+  getSession,
   registerUserMessage,
   registerAssistantMessage
 } from "./session.js";
 
 import {
-  emit,
-  EVENTS
+  initializeVoiceManager,
+  getVoiceManagerStatus,
+  diagnoseVoiceManager
+} from "./voice-manager.js";
+
+import {
+  initializeAutomationControl,
+  getAutomationControlStatus,
+  diagnoseAutomationControl
+} from "./automation-control.js";
+
+import {
+  initializeWorkflowManager,
+  getWorkflowManagerStatus,
+  diagnoseWorkflowManager
+} from "./workflow-manager.js";
+
+import {
+  initializeControl,
+  getControlStatus,
+  diagnoseControl
+} from "./control.js";
+
+import {
+  emit
 } from "./events.js";
 
 import {
-  getBrainState,
-  setBrainStatus,
-  activateBrain,
-  returnToIdle,
-  registerInput,
-  registerResponse,
-  registerError
+  getBrainState
 } from "./state.js";
 
 import {
   getSettings
 } from "./settings.js";
 
-
-// ============================================================
-// VERSÃO
-// ============================================================
-
-export const ENGINE_VERSION = "1.0.0";
-
-
-// ============================================================
-// ESTADO
-// ============================================================
+export const ENGINE_VERSION = "2.0.0";
 
 let initialized = false;
-
-let engineStatus =
-  "offline";
-
-let lastInput =
-  null;
-
-let lastOutput =
-  null;
-
-let lastError =
-  null;
-
-let initializedAt =
-  null;
-
+let running = false;
 
 // ============================================================
 // INICIALIZAÇÃO
 // ============================================================
 
-export function initializeEngine(
-  owner = null
-) {
-
+export function initializeEngine(owner = null) {
   try {
-
     initializeSystem(owner);
 
+    initializeSession();
     createSession();
 
-    initialized =
-      true;
+    initializeControl();
+    initializeVoiceManager();
+    initializeAutomationControl();
+    initializeWorkflowManager();
 
-    engineStatus =
-      "online";
+    initialized = true;
+    running = true;
 
-    initializedAt =
-      new Date().toISOString();
-
-    lastError =
-      null;
-
-
-    emit(
-      EVENTS.SYSTEM_READY,
-      {
-        engine:
-          ENGINE_VERSION,
-
-        timestamp:
-          initializedAt
-      }
-    );
-
+    emit("system:ready", {
+      module: "engine",
+      version: ENGINE_VERSION
+    });
 
     return {
-
       ok: true,
-
-      status:
-        engineStatus,
-
-      version:
-        ENGINE_VERSION,
-
-      initializedAt
-
+      initialized: true,
+      running: true,
+      version: ENGINE_VERSION
     };
 
   } catch (error) {
+    initialized = false;
+    running = false;
 
-    initialized =
-      false;
-
-    engineStatus =
-      "error";
-
-    lastError =
-      error.message;
-
-
-    emit(
-      EVENTS.SYSTEM_ERROR,
-      {
-        error:
-          error.message
-      }
-    );
-
+    emit("system:error", {
+      module: "engine",
+      error: error?.message
+    });
 
     return {
-
       ok: false,
-
-      error:
-        error.message
-
+      initialized: false,
+      running: false,
+      error: error?.message || "Erro ao inicializar engine."
     };
   }
 }
 
-
 // ============================================================
-// VERIFICAR INICIALIZAÇÃO
+// PROCESSAR ENTRADA PRINCIPAL
 // ============================================================
 
-function ensureEngine() {
+export async function processInput(input, options = {}) {
+  if (!input || typeof input !== "string") {
+    return {
+      ok: false,
+      error: "Entrada inválida."
+    };
+  }
 
   if (!initialized) {
-
-    initializeEngine();
+    initializeEngine(options.owner || null);
   }
 
-  return initialized;
-}
-
-
-// ============================================================
-// PROCESSAR ENTRADA COMPLETA
-// ============================================================
-
-export async function processInput(
-  input,
-  options = {}
-) {
-
-  if (
-    typeof input !== "string" ||
-    !input.trim()
-  ) {
-
+  if (!running) {
     return {
-
       ok: false,
-
-      error:
-        "Entrada vazia."
+      error: "Engine está pausada."
     };
   }
-
-
-  ensureEngine();
-
-
-  const text =
-    input.trim();
-
-
-  lastInput =
-    text;
-
-  lastError =
-    null;
-
-
-  activateBrain();
-
-  setBrainStatus(
-    "listening"
-  );
-
-  registerInput(
-    text
-  );
-
-
-  emit(
-    EVENTS.INPUT,
-    {
-      input:
-        text,
-
-      timestamp:
-        new Date().toISOString()
-    }
-  );
-
 
   try {
+    emit("input", {
+      source: "engine",
+      input
+    });
 
-    setBrainStatus(
-      "thinking"
-    );
-
-    emit(
-      EVENTS.THINKING,
-      {
-        input:
-          text
-      }
-    );
-
-
-    const result =
-      await routeRequest(
-        text,
-        {
-          ...options,
-
-          settings:
-            getSettings(),
-
-          session:
-            getSessionContext()
-
-        }
-      );
-
-
-    lastOutput =
-      result;
-
-
-    if (
-      result?.response
-    ) {
-
-      registerAssistantMessage(
-        result.response
-      );
-
-      registerResponse(
-        result.response
-      );
-    }
-
-
-    emit(
-      EVENTS.EXECUTION_COMPLETED,
-      {
-        input:
-          text,
-
-        result
-      }
-    );
-
+    const result = await routeRequest(input, options);
 
     return {
-
-      ok:
-        result?.ok !== false,
-
-      input:
-        text,
-
-      result,
-
-      response:
-        result?.response ||
-        result?.result?.response ||
-        null
-
-    };
-
-  } catch (error) {
-
-    lastError =
-      error.message;
-
-
-    registerError(
-      error.message
-    );
-
-
-    emit(
-      EVENTS.SYSTEM_ERROR,
-      {
-        error:
-          error.message,
-
-        input:
-          text
-      }
-    );
-
-
-    return {
-
-      ok: false,
-
-      input:
-        text,
-
-      error:
-        error.message
-
-    };
-
-  } finally {
-
-    returnToIdle();
-  }
-}
-
-
-// ============================================================
-// CHAT DIRETO COM IA
-// ============================================================
-
-export async function processChat(
-  message,
-  options = {}
-) {
-
-  if (
-    typeof message !== "string" ||
-    !message.trim()
-  ) {
-
-    return {
-
-      ok: false,
-
-      error:
-        "Mensagem vazia."
-    };
-  }
-
-
-  ensureEngine();
-
-
-  const text =
-    message.trim();
-
-
-  lastInput =
-    text;
-
-  lastError =
-    null;
-
-
-  activateBrain();
-
-  setBrainStatus(
-    "thinking"
-  );
-
-
-  try {
-
-    emit(
-      EVENTS.AI_REQUEST,
-      {
-        message:
-          text
-      }
-    );
-
-
-    const result =
-      await askAI(
-        text,
-        {
-          ...options,
-
-          settings:
-            getSettings()
-        }
-      );
-
-
-    if (
-      result?.response
-    ) {
-
-      lastOutput =
-        result.response;
-
-      registerResponse(
-        result.response
-      );
-
-
-      emit(
-        EVENTS.AI_RESPONSE,
-        {
-          response:
-            result.response
-        }
-      );
-
-    }
-
-
-    return {
-
-      ok:
-        result?.ok !== false,
-
-      response:
-        result?.response ||
-        "",
-
-      memoryToSave:
-        result?.memoryToSave ||
-        null,
-
-      model:
-        result?.model ||
-        null,
-
-      responseId:
-        result?.responseId ||
-        null
-
-    };
-
-  } catch (error) {
-
-    lastError =
-      error.message;
-
-
-    registerError(
-      error.message
-    );
-
-
-    return {
-
-      ok: false,
-
-      error:
-        error.message
-
-    };
-
-  } finally {
-
-    returnToIdle();
-  }
-}
-
-
-// ============================================================
-// EXECUTAR COMANDO
-// ============================================================
-
-export async function processCommand(
-  input,
-  options = {}
-) {
-
-  if (
-    typeof input !== "string" ||
-    !input.trim()
-  ) {
-
-    return {
-
-      ok: false,
-
-      error:
-        "Comando vazio."
-    };
-  }
-
-
-  ensureEngine();
-
-
-  const text =
-    input.trim();
-
-
-  lastInput =
-    text;
-
-
-  activateBrain();
-
-  setBrainStatus(
-    "executing"
-  );
-
-
-  try {
-
-    const result =
-      await executeFromText(
-        text,
-        options
-      );
-
-
-    lastOutput =
-      result;
-
-
-    return {
-
-      ok:
-        result?.ok !== false,
-
+      ok: result?.ok !== false,
+      input,
       result
-
     };
 
   } catch (error) {
-
-    lastError =
-      error.message;
-
-
-    registerError(
-      error.message
-    );
-
+    emit("system:error", {
+      module: "engine",
+      error: error?.message
+    });
 
     return {
-
       ok: false,
-
-      error:
-        error.message
-
+      input,
+      error: error?.message || "Erro ao processar entrada."
     };
-
-  } finally {
-
-    returnToIdle();
   }
 }
 
+// ============================================================
+// CHAT COM IA
+// ============================================================
+
+export async function processChat(message, options = {}) {
+  if (!message || typeof message !== "string") {
+    return {
+      ok: false,
+      error: "Mensagem inválida."
+    };
+  }
+
+  if (!initialized) {
+    initializeEngine(options.owner || null);
+  }
+
+  try {
+    registerUserMessage(message);
+
+    emit("ai:request", {
+      source: "engine",
+      message
+    });
+
+    const result = await askAI(message, options);
+
+    if (result?.response) {
+      registerAssistantMessage(result.response);
+
+      emit("ai:response", {
+        source: "engine",
+        response: result.response
+      });
+    }
+
+    return {
+      ok: result?.ok !== false,
+      ...result
+    };
+
+  } catch (error) {
+    return {
+      ok: false,
+      error: error?.message || "Erro ao conversar com a IA."
+    };
+  }
+}
 
 // ============================================================
-// REGISTRAR MENSAGEM MANUAL
+// COMANDO DIRETO
 // ============================================================
 
-export function addUserMessage(
-  message
-) {
+export async function processCommand(command, options = {}) {
+  if (!command || typeof command !== "string") {
+    return {
+      ok: false,
+      error: "Comando inválido."
+    };
+  }
 
-  ensureEngine();
+  if (!initialized) {
+    initializeEngine(options.owner || null);
+  }
 
+  try {
+    const result = await executeFromText(
+      command,
+      options
+    );
 
+    return {
+      ok: result?.ok !== false,
+      command,
+      result
+    };
+
+  } catch (error) {
+    return {
+      ok: false,
+      command,
+      error: error?.message || "Erro ao executar comando."
+    };
+  }
+}
+
+// ============================================================
+// ANÁLISE
+// ============================================================
+
+export function analyzeInput(input) {
+  return analyzeOnly(input);
+}
+
+// ============================================================
+// PLANEJAMENTO
+// ============================================================
+
+export function planInput(input) {
+  return planOnly(input);
+}
+
+// ============================================================
+// CONTEXTO
+// ============================================================
+
+export function getInputContext(input) {
+  return contextOnly(input);
+}
+
+// ============================================================
+// MENSAGENS
+// ============================================================
+
+export function addUserMessage(message, metadata = {}) {
   return registerUserMessage(
-    message
+    message,
+    metadata
   );
 }
 
-
-// ============================================================
-// REGISTRAR RESPOSTA MANUAL
-// ============================================================
-
-export function addAssistantMessage(
-  message
-) {
-
-  ensureEngine();
-
-
+export function addAssistantMessage(message, metadata = {}) {
   return registerAssistantMessage(
-    message
+    message,
+    metadata
   );
 }
 
-
 // ============================================================
-// STATUS DO ENGINE
+// STATUS COMPLETO
 // ============================================================
 
 export function getEngineStatus() {
-
   return {
+    ok: true,
 
-    ok:
-      initialized &&
-      engineStatus === "online",
+    engine: {
+      version: ENGINE_VERSION,
+      initialized,
+      running
+    },
 
-    version:
-      ENGINE_VERSION,
+    system: getSystemStatus(),
 
-    initialized,
+    brain: getBrainState(),
 
-    status:
-      engineStatus,
+    session: getSession(),
 
-    initializedAt,
+    settings: getSettings(),
 
-    lastInput,
+    voice: getVoiceManagerStatus(),
 
-    lastOutput,
+    automation: getAutomationControlStatus(),
 
-    lastError,
-
-    brain:
-      getBrainState(),
-
-    settings:
-      getSettings()
-
+    workflow: getWorkflowManagerStatus()
   };
 }
-
 
 // ============================================================
 // DIAGNÓSTICO
 // ============================================================
 
 export function diagnoseEngine() {
+  const results = {};
 
-  const system =
-    diagnoseSystem();
+  try {
+    results.system = diagnoseSystem();
+  } catch (error) {
+    results.system = {
+      ok: false,
+      error: error?.message
+    };
+  }
 
+  try {
+    results.ai = diagnoseAI();
+  } catch (error) {
+    results.ai = {
+      ok: false,
+      error: error?.message
+    };
+  }
+
+  try {
+    results.command = diagnoseCommand();
+  } catch (error) {
+    results.command = {
+      ok: false,
+      error: error?.message
+    };
+  }
+
+  try {
+    results.control = diagnoseControl();
+  } catch (error) {
+    results.control = {
+      ok: false,
+      error: error?.message
+    };
+  }
+
+  try {
+    results.voice = diagnoseVoiceManager();
+  } catch (error) {
+    results.voice = {
+      ok: false,
+      error: error?.message
+    };
+  }
+
+  try {
+    results.automation = diagnoseAutomationControl();
+  } catch (error) {
+    results.automation = {
+      ok: false,
+      error: error?.message
+    };
+  }
+
+  try {
+    results.workflow = diagnoseWorkflowManager();
+  } catch (error) {
+    results.workflow = {
+      ok: false,
+      error: error?.message
+    };
+  }
+
+  const modules = Object.values(results);
+
+  const healthy = modules.filter(
+    module => module?.ok !== false
+  ).length;
 
   return {
+    ok: modules.every(
+      module => module?.ok !== false
+    ),
 
-    ok:
-      initialized &&
-      system?.ok !== false,
+    version: ENGINE_VERSION,
 
-    engine: {
+    initialized,
+    running,
 
-      initialized,
+    healthyModules: healthy,
+    totalModules: modules.length,
 
-      status:
-        engineStatus,
-
-      version:
-        ENGINE_VERSION
-
-    },
-
-    system,
-
-    brain:
-      getBrainState(),
-
-    lastError,
-
-    timestamp:
-      new Date().toISOString()
-
+    modules: results
   };
 }
 
-
 // ============================================================
-// REINICIAR ENGINE
+// REINICIAR
 // ============================================================
 
-export function restartEngine(
-  owner = null
-) {
+export function restartEngine(owner = null) {
+  try {
+    running = false;
 
-  initialized =
-    false;
+    emit("system:error", {
+      module: "engine",
+      action: "restart"
+    });
 
-  engineStatus =
-    "offline";
+    restartSystem();
 
-  lastInput =
-    null;
+    initialized = false;
 
-  lastOutput =
-    null;
+    return initializeEngine(owner);
 
-  lastError =
-    null;
-
-
-  return initializeEngine(
-    owner
-  );
+  } catch (error) {
+    return {
+      ok: false,
+      error: error?.message || "Erro ao reiniciar engine."
+    };
+  }
 }
 
+// ============================================================
+// PARAR
+// ============================================================
+
+export function stopEngine() {
+  running = false;
+
+  emit("system:error", {
+    module: "engine",
+    action: "stop"
+  });
+
+  return {
+    ok: true,
+    running: false
+  };
+}
 
 // ============================================================
 // INFORMAÇÕES
 // ============================================================
 
 export function getEngineInfo() {
-
   return {
+    version: ENGINE_VERSION,
 
-    name:
-      "JARVIS V6 Engine",
+    initialized,
 
-    version:
-      ENGINE_VERSION,
+    running,
 
-    purpose:
-      "Motor central de execução do JARVIS.",
+    architecture: {
+      system: true,
+      router: true,
+      ai: true,
+      command: true,
+      session: true,
+      voice: true,
+      automation: true,
+      workflow: true,
+      control: true
+    },
 
-    capabilities: [
-
-      "system initialization",
-
-      "request routing",
-
-      "AI chat",
-
-      "command execution",
-
-      "session integration",
-
-      "brain state integration",
-
-      "event integration",
-
-      "settings integration",
-
-      "diagnostics"
-
-    ]
-
+    ai: getAIInfo()
   };
-        }
+}
+
+// ============================================================
+// AUTO-INICIALIZAÇÃO
+// ============================================================
+
+initializeEngine();
